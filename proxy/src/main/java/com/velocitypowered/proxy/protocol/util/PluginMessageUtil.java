@@ -10,6 +10,7 @@ import com.velocitypowered.api.util.ProxyVersion;
 import com.velocitypowered.proxy.protocol.ProtocolUtils;
 import com.velocitypowered.proxy.protocol.packet.PluginMessage;
 import io.netty.buffer.ByteBuf;
+import io.netty.buffer.ByteBufUtil;
 import io.netty.buffer.Unpooled;
 import java.nio.charset.StandardCharsets;
 import java.util.Collection;
@@ -25,6 +26,8 @@ public class PluginMessageUtil {
   private static final String REGISTER_CHANNEL = "minecraft:register";
   private static final String UNREGISTER_CHANNEL_LEGACY = "UNREGISTER";
   private static final String UNREGISTER_CHANNEL = "minecraft:unregister";
+
+  private static final int MAX_REASONABLE_BRAND_SIZE = 1024;
 
   private PluginMessageUtil() {
     throw new AssertionError();
@@ -139,8 +142,11 @@ public class PluginMessageUtil {
       String currentBrand = ProtocolUtils.readString(message.content().slice());
       ProtocolUtils.writeString(rewrittenBuf, currentBrand + toAppend);
     } else {
-      String currentBrand = ProtocolUtils.readStringWithoutLength(message.content().slice());
-      rewrittenBuf.writeBytes((currentBrand + toAppend).getBytes());
+      if (message.content().readableBytes() > MAX_REASONABLE_BRAND_SIZE) {
+        throw new IllegalArgumentException("Legacy brand message is too long!");
+      }
+      String currentBrand = message.content().toString(StandardCharsets.UTF_8);
+      ByteBufUtil.writeUtf8(rewrittenBuf, currentBrand + toAppend);
     }
 
     return new PluginMessage(message.getChannel(), rewrittenBuf);

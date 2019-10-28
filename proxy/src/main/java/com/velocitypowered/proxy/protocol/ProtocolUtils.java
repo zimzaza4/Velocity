@@ -16,6 +16,7 @@ import java.util.UUID;
 public enum ProtocolUtils {
   ;
   private static final int DEFAULT_MAX_STRING_SIZE = 65536; // 64KiB
+  private static final int FORGE_MAX_ARRAY_LENGTH = Integer.MAX_VALUE & 0x1FFF9A;
 
   /**
    * Reads a Minecraft-style VarInt from the specified {@code buf}.
@@ -194,8 +195,6 @@ public enum ProtocolUtils {
     return properties;
   }
 
-  private static final int FORGE_MAX_ARRAY_LENGTH = Integer.MAX_VALUE & 0x1FFF9A;
-
   /**
    * Reads an byte array for legacy version 1.7 from the specified {@code buf}
    *
@@ -316,31 +315,6 @@ public enum ProtocolUtils {
     if (high != 0) {
       buf.writeByte(high);
     }
-  }
-
-  /**
-   * Reads a non length-prefixed string from the {@code buf}. We need this for the legacy 1.7
-   * version, being inconsistent when sending the brand.
-   *
-   * @param buf the buffer to read from
-   * @return the decoded string
-   */
-  public static String readStringWithoutLength(ByteBuf buf) {
-    int length = buf.readableBytes();
-    int cap = DEFAULT_MAX_STRING_SIZE;
-    checkArgument(length >= 0, "Got a negative-length string (%s)", length);
-    // `cap` is interpreted as a UTF-8 character length. To cover the full Unicode plane, we must
-    // consider the length of a UTF-8 character, which can be up to a 4 bytes. We do an initial
-    // sanity check and then check again to make sure our optimistic guess was good.
-    checkArgument(length <= cap * 4, "Bad string size (got %s, maximum is %s)", length, cap);
-    checkState(buf.isReadable(length),
-        "Trying to read a string that is too long (wanted %s, only have %s)", length,
-        buf.readableBytes());
-    String str = buf.toString(buf.readerIndex(), length, StandardCharsets.UTF_8);
-    buf.skipBytes(length);
-    checkState(str.length() <= cap, "Got a too-long string (got %s, max %s)",
-        str.length(), cap);
-    return str;
   }
 
   public enum Direction {

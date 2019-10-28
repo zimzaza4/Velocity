@@ -36,6 +36,7 @@ import io.netty.util.ReferenceCountUtil;
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 import java.security.GeneralSecurityException;
+import java.util.concurrent.TimeUnit;
 import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
 import org.apache.logging.log4j.LogManager;
@@ -199,8 +200,19 @@ public class MinecraftConnection extends ChannelInboundHandlerAdapter {
   public void closeWith(Object msg) {
     if (channel.isActive()) {
       knownDisconnect = true;
-      channel.writeAndFlush(msg).addListener(ChannelFutureListener.CLOSE);
+      if (protocolVersion.compareTo(ProtocolVersion.MINECRAFT_1_8) < 0) {
+        this.doMinecraft17Disconnect(msg);
+      } else {
+        channel.writeAndFlush(msg).addListener(ChannelFutureListener.CLOSE);
+      }
     }
+  }
+
+  private void doMinecraft17Disconnect(Object msg) {
+    // Minecraft 1.7.10 is known to have a race condition in switching states. In order to allow it
+    // to switch states properly, we will disconnect the client after 100 milliseconds.
+    Runnable close = () -> channel.writeAndFlush(msg).addListener(ChannelFutureListener.CLOSE);
+    channel.eventLoop().schedule(close, 100, TimeUnit.MILLISECONDS);
   }
 
   /**
