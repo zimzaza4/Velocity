@@ -17,6 +17,7 @@ import com.velocitypowered.proxy.protocol.packet.LoginPluginMessage;
 import com.velocitypowered.proxy.protocol.packet.LoginPluginResponse;
 import com.velocitypowered.proxy.protocol.packet.ServerLoginSuccess;
 import com.velocitypowered.proxy.protocol.packet.SetCompression;
+import com.velocitypowered.proxy.util.exceptions.UnexpectedDisconnectException;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import java.io.IOException;
@@ -111,8 +112,7 @@ public class LoginSessionHandler implements MinecraftSessionHandler {
 
   @Override
   public void disconnected() {
-    resultFuture
-        .completeExceptionally(new IOException("Unexpectedly disconnected from remote server"));
+    resultFuture.completeExceptionally(UnexpectedDisconnectException.INSTANCE);
   }
 
   private static ByteBuf createForwardingData(byte[] hmacSecret, String address,

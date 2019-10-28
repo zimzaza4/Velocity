@@ -31,6 +31,7 @@ import com.velocitypowered.proxy.VelocityServer;
 import com.velocitypowered.proxy.connection.MinecraftConnection;
 import com.velocitypowered.proxy.connection.MinecraftConnectionAssociation;
 import com.velocitypowered.proxy.connection.backend.VelocityServerConnection;
+import com.velocitypowered.proxy.connection.client.player.PlayerChannelRegistrar;
 import com.velocitypowered.proxy.connection.forge.legacy.LegacyForgeConstants;
 import com.velocitypowered.proxy.connection.util.ConnectionMessages;
 import com.velocitypowered.proxy.connection.util.ConnectionRequestResults;
@@ -48,7 +49,6 @@ import com.velocitypowered.proxy.server.VelocityRegisteredServer;
 import com.velocitypowered.proxy.tablist.VelocityTabList;
 import com.velocitypowered.proxy.tablist.VelocityTabListLegacy;
 import com.velocitypowered.proxy.util.VelocityMessages;
-import com.velocitypowered.proxy.util.collect.CappedSet;
 import io.netty.buffer.ByteBufUtil;
 import io.netty.buffer.Unpooled;
 import java.net.InetSocketAddress;
@@ -74,7 +74,6 @@ import org.checkerframework.checker.nullness.qual.Nullable;
 
 public class ConnectedPlayer implements MinecraftConnectionAssociation, Player {
 
-  private static final int MAX_PLUGIN_CHANNELS = 1024;
   private static final PlainComponentSerializer PASS_THRU_TRANSLATE = new PlainComponentSerializer(
       c -> "", TranslatableComponent::key);
   static final PermissionProvider DEFAULT_PERMISSIONS = s -> PermissionFunction.ALWAYS_UNDEFINED;
@@ -98,7 +97,7 @@ public class ConnectedPlayer implements MinecraftConnectionAssociation, Player {
   private final VelocityTabList tabList;
   private final VelocityServer server;
   private ClientConnectionPhase connectionPhase;
-  private final Collection<String> knownChannels;
+  private final PlayerChannelRegistrar channelRegistrar;
   private final CompletableFuture<Void> teardownFuture = new CompletableFuture<>();
 
   private @MonotonicNonNull List<String> serversToTry = null;
@@ -116,7 +115,7 @@ public class ConnectedPlayer implements MinecraftConnectionAssociation, Player {
     this.virtualHost = virtualHost;
     this.permissionFunction = PermissionFunction.ALWAYS_UNDEFINED;
     this.connectionPhase = connection.getType().getInitialClientPhase();
-    this.knownChannels = CappedSet.create(MAX_PLUGIN_CHANNELS);
+    this.channelRegistrar = new PlayerChannelRegistrar();
     this.onlineMode = onlineMode;
   }
 
@@ -661,37 +660,8 @@ public class ConnectedPlayer implements MinecraftConnectionAssociation, Player {
     this.connectionPhase = connectionPhase;
   }
 
-  /**
-   * Return all the plugin message channels "known" to the client.
-   * @return the channels
-   */
-  public Collection<String> getKnownChannels() {
-    return knownChannels;
-  }
-
-  /**
-   * Determines whether or not we can forward a plugin message onto the client.
-   * @param version the Minecraft protocol version
-   * @param message the plugin message to forward to the client
-   * @return {@code true} if the message can be forwarded, {@code false} otherwise
-   */
-  public boolean canForwardPluginMessage(ProtocolVersion version, PluginMessage message) {
-    boolean minecraftOrFmlMessage;
-
-    // By default, all internal Minecraft and Forge channels are forwarded from the server.
-    if (version.compareTo(ProtocolVersion.MINECRAFT_1_12_2) <= 0) {
-      String channel = message.getChannel();
-      minecraftOrFmlMessage = channel.startsWith("MC|")
-          || channel.startsWith(LegacyForgeConstants.FORGE_LEGACY_HANDSHAKE_CHANNEL)
-          || PluginMessageUtil.isLegacyRegister(message)
-          || PluginMessageUtil.isLegacyUnregister(message);
-    } else {
-      minecraftOrFmlMessage = message.getChannel().startsWith("minecraft:");
-    }
-
-    // Otherwise, we need to see if the player already knows this channel or it's known by the
-    // proxy.
-    return minecraftOrFmlMessage || knownChannels.contains(message.getChannel());
+  public PlayerChannelRegistrar getChannelRegistrar() {
+    return channelRegistrar;
   }
 
   private class ConnectionRequestBuilderImpl implements ConnectionRequestBuilder {

@@ -40,6 +40,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.Queue;
+import java.util.Set;
 import java.util.UUID;
 import net.kyori.text.TextComponent;
 import net.kyori.text.format.TextColor;
@@ -79,7 +80,7 @@ public class ClientPlaySessionHandler implements MinecraftSessionHandler {
     if (!channels.isEmpty()) {
       PluginMessage register = constructChannelsPacket(player.getProtocolVersion(), channels);
       player.getConnection().write(register);
-      player.getKnownChannels().addAll(channels);
+      player.getChannelRegistrar().getKnownChannels().addAll(channels);
     }
   }
 
@@ -171,11 +172,7 @@ public class ClientPlaySessionHandler implements MinecraftSessionHandler {
       if (backendConn.getState() != StateRegistry.PLAY) {
         logger.warn("A plugin message was received while the backend server was not "
             + "ready. Channel: {}. Packet discarded.", packet.getChannel());
-      } else if (PluginMessageUtil.isRegister(packet)) {
-        player.getKnownChannels().addAll(PluginMessageUtil.getChannels(packet));
-        backendConn.write(packet.retain());
-      } else if (PluginMessageUtil.isUnregister(packet)) {
-        player.getKnownChannels().removeAll(PluginMessageUtil.getChannels(packet));
+      } else if (player.getChannelRegistrar().handlePluginMessage(packet)) {
         backendConn.write(packet.retain());
       } else if (PluginMessageUtil.isMcBrand(packet)) {
         backendConn.write(PluginMessageUtil
@@ -332,8 +329,9 @@ public class ClientPlaySessionHandler implements MinecraftSessionHandler {
 
     // Tell the server about this client's plugin message channels.
     ProtocolVersion serverVersion = serverMc.getProtocolVersion();
-    if (!player.getKnownChannels().isEmpty()) {
-      serverMc.delayedWrite(constructChannelsPacket(serverVersion, player.getKnownChannels()));
+    Collection<String> knownChannels = player.getChannelRegistrar().getKnownChannels();
+    if (!knownChannels.isEmpty()) {
+      serverMc.delayedWrite(constructChannelsPacket(serverVersion, knownChannels));
     }
 
     // If we had plugin messages queued during login/FML handshake, send them now.

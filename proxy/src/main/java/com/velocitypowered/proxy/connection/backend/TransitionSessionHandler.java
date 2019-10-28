@@ -9,6 +9,7 @@ import com.velocitypowered.proxy.connection.ConnectionTypes;
 import com.velocitypowered.proxy.connection.MinecraftConnection;
 import com.velocitypowered.proxy.connection.MinecraftSessionHandler;
 import com.velocitypowered.proxy.connection.client.ClientPlaySessionHandler;
+import com.velocitypowered.proxy.connection.client.player.PlayerChannelRegistrar;
 import com.velocitypowered.proxy.connection.util.ConnectionMessages;
 import com.velocitypowered.proxy.connection.util.ConnectionRequestResults;
 import com.velocitypowered.proxy.connection.util.ConnectionRequestResults.Impl;
@@ -17,6 +18,7 @@ import com.velocitypowered.proxy.protocol.packet.JoinGame;
 import com.velocitypowered.proxy.protocol.packet.KeepAlive;
 import com.velocitypowered.proxy.protocol.packet.PluginMessage;
 import com.velocitypowered.proxy.protocol.util.PluginMessageUtil;
+import com.velocitypowered.proxy.util.exceptions.UnexpectedDisconnectException;
 import java.io.IOException;
 import java.util.concurrent.CompletableFuture;
 import org.apache.logging.log4j.LogManager;
@@ -139,16 +141,14 @@ public class TransitionSessionHandler implements MinecraftSessionHandler {
 
   @Override
   public boolean handle(PluginMessage packet) {
-    if (!serverConn.getPlayer().canForwardPluginMessage(serverConn.ensureConnected()
-        .getProtocolVersion(), packet)) {
+    PlayerChannelRegistrar registrar = serverConn.getPlayer().getChannelRegistrar();
+
+    if (!registrar.canForwardPluginMessage(serverConn.ensureConnected().getProtocolVersion(),
+        packet)) {
       return true;
     }
 
-    if (PluginMessageUtil.isRegister(packet)) {
-      serverConn.getPlayer().getKnownChannels().addAll(PluginMessageUtil.getChannels(packet));
-    } else if (PluginMessageUtil.isUnregister(packet)) {
-      serverConn.getPlayer().getKnownChannels().removeAll(PluginMessageUtil.getChannels(packet));
-    }
+    registrar.handlePluginMessage(packet);
 
     // We always need to handle plugin messages, for Forge compatibility.
     if (serverConn.getPhase().handle(serverConn, serverConn.getPlayer(), packet)) {
@@ -173,7 +173,6 @@ public class TransitionSessionHandler implements MinecraftSessionHandler {
 
   @Override
   public void disconnected() {
-    resultFuture
-        .completeExceptionally(new IOException("Unexpectedly disconnected from remote server"));
+    resultFuture.completeExceptionally(UnexpectedDisconnectException.INSTANCE);
   }
 }

@@ -10,6 +10,7 @@ import com.velocitypowered.proxy.VelocityServer;
 import com.velocitypowered.proxy.connection.MinecraftConnection;
 import com.velocitypowered.proxy.connection.MinecraftSessionHandler;
 import com.velocitypowered.proxy.connection.client.ClientPlaySessionHandler;
+import com.velocitypowered.proxy.connection.client.player.PlayerChannelRegistrar;
 import com.velocitypowered.proxy.connection.util.ConnectionMessages;
 import com.velocitypowered.proxy.protocol.MinecraftPacket;
 import com.velocitypowered.proxy.protocol.packet.AvailableCommands;
@@ -86,18 +87,15 @@ public class BackendPlaySessionHandler implements MinecraftSessionHandler {
 
   @Override
   public boolean handle(PluginMessage packet) {
-    if (!serverConn.getPlayer().canForwardPluginMessage(serverConn.ensureConnected()
-        .getProtocolVersion(), packet)) {
+    PlayerChannelRegistrar registrar = serverConn.getPlayer().getChannelRegistrar();
+
+    if (!registrar.canForwardPluginMessage(serverConn.ensureConnected().getProtocolVersion(),
+        packet)) {
       return true;
     }
 
-    // We need to specially handle REGISTER and UNREGISTER packets. Later on, we'll write them to
-    // the client.
-    if (PluginMessageUtil.isRegister(packet)) {
-      serverConn.getPlayer().getKnownChannels().addAll(PluginMessageUtil.getChannels(packet));
-      return false;
-    } else if (PluginMessageUtil.isUnregister(packet)) {
-      serverConn.getPlayer().getKnownChannels().removeAll(PluginMessageUtil.getChannels(packet));
+    if (registrar.handlePluginMessage(packet)) {
+      // Break early and forward to the client
       return false;
     }
 
@@ -109,7 +107,7 @@ public class BackendPlaySessionHandler implements MinecraftSessionHandler {
     }
 
     if (serverConn.getPhase().handle(serverConn, serverConn.getPlayer(), packet)) {
-      // Handled.
+      // Forge plugin message handled.
       return true;
     }
 
