@@ -712,28 +712,28 @@ public class ConnectedPlayer implements MinecraftConnectionAssociation, Player {
       return toConnect;
     }
 
-    private Optional<ConnectionRequestBuilder.Status> checkServer(RegisteredServer server) {
+    private Status checkServer(RegisteredServer server) {
       Preconditions.checkArgument(server instanceof VelocityRegisteredServer,
           "Not a valid Velocity server.");
       if (connectionInFlight != null || (connectedServer != null
           && !connectedServer.hasCompletedJoin())) {
-        return Optional.of(ConnectionRequestBuilder.Status.CONNECTION_IN_PROGRESS);
+        return ConnectionRequestBuilder.Status.CONNECTION_IN_PROGRESS;
       }
       if (connectedServer != null && connectedServer.getServer().equals(server)) {
-        return Optional.of(ConnectionRequestBuilder.Status.ALREADY_CONNECTED);
+        return ConnectionRequestBuilder.Status.ALREADY_CONNECTED;
       }
-      return Optional.empty();
+      return null;
     }
 
-    private CompletableFuture<Optional<Status>> getInitialStatus() {
+    private CompletableFuture<Status> getInitialStatus() {
       return CompletableFuture.supplyAsync(() -> checkServer(toConnect), connection.eventLoop());
     }
 
     private CompletableFuture<Impl> internalConnect() {
       return this.getInitialStatus()
           .thenCompose(initialCheck -> {
-            if (initialCheck.isPresent()) {
-              return completedFuture(plainResult(initialCheck.get(), toConnect));
+            if (initialCheck != null) {
+              return completedFuture(plainResult(initialCheck, toConnect));
             }
 
             ServerPreConnectEvent event = new ServerPreConnectEvent(ConnectedPlayer.this,
@@ -748,9 +748,9 @@ public class ConnectedPlayer implements MinecraftConnectionAssociation, Player {
                   }
 
                   RegisteredServer realDestination = newDest.get();
-                  Optional<ConnectionRequestBuilder.Status> check = checkServer(realDestination);
-                  if (check.isPresent()) {
-                    return completedFuture(plainResult(check.get(), realDestination));
+                  Status finalCheckBeforeConnect = checkServer(realDestination);
+                  if (finalCheckBeforeConnect != null) {
+                    return completedFuture(plainResult(finalCheckBeforeConnect, realDestination));
                   }
 
                   VelocityRegisteredServer vrs = (VelocityRegisteredServer) realDestination;

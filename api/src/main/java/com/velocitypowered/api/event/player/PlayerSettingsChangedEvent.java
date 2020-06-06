@@ -1,6 +1,5 @@
 package com.velocitypowered.api.event.player;
 
-import com.google.common.base.MoreObjects;
 import com.google.common.base.Preconditions;
 import com.velocitypowered.api.proxy.Player;
 import com.velocitypowered.api.proxy.player.PlayerSettings;
@@ -25,9 +24,9 @@ public final class PlayerSettingsChangedEvent {
 
   @Override
   public String toString() {
-    return MoreObjects.toStringHelper(this)
-        .add("player", player)
-        .add("playerSettings", playerSettings)
-        .toString();
+    return "PlayerSettingsChangedEvent{"
+        + "player=" + player
+        + ", playerSettings=" + playerSettings
+        + '}';
   }
 }

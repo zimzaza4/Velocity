@@ -2,7 +2,6 @@ package com.velocitypowered.api.plugin.meta;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
-import static com.google.common.base.Strings.emptyToNull;
 
 import java.util.Objects;
 import java.util.Optional;
@@ -25,9 +24,10 @@ public final class PluginDependency {
    * @param optional whether or not this dependency is optional
    */
   public PluginDependency(String id, @Nullable String version, boolean optional) {
-    this.id = checkNotNull(id, "id");
+    checkNotNull(id, "id");
     checkArgument(!id.isEmpty(), "id cannot be empty");
-    this.version = emptyToNull(version);
+    this.id = id;
+    this.version = version == null || version.isEmpty() ? null : version;
     this.optional = optional;
   }
 

@@ -63,9 +63,10 @@ public final class PluginMessageEvent implements ResultedEvent<PluginMessageEven
   }
 
   public byte[] getData() {
-    return Arrays.copyOf(data, data.length);
+    return data.clone();
   }
 
+  @SuppressWarnings("incompatible") // the warning makes emitted little sense
   public ByteArrayDataInput dataAsDataStream() {
     return ByteStreams.newDataInput(data);
   }

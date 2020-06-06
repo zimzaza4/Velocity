@@ -3,33 +3,54 @@ package com.velocitypowered.natives.util;
 import java.util.List;
 import java.util.function.BooleanSupplier;
 import java.util.function.Supplier;
+import org.checkerframework.checker.nullness.qual.EnsuresNonNull;
+import org.checkerframework.checker.nullness.qual.MonotonicNonNull;
+import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
 
-public final class NativeCodeLoader<T> implements Supplier<T> {
+public final class NativeCodeLoader<T extends @NonNull Object> implements Supplier<T> {
 
-  private final Variant<T> selected;
+  private final List<Variant<T>> variants;
+  private @MonotonicNonNull Variant<T> selected;
 
   NativeCodeLoader(List<Variant<T>> variants) {
-    this.selected = getVariant(variants);
+    this.variants = variants;
+  }
+
+  @EnsuresNonNull("selected")
+  private void selectVariant() {
+    if (selected == null) {
+      for (Variant<T> variant : variants) {
+        @Nullable T got = variant.get();
+        if (got != null) {
+          this.selected = variant;
+          break;
+        }
+      }
+      throw new IllegalArgumentException("Can't find any suitable variants");
+    }
   }
 
   @Override
   public T get() {
+    if (selected == null) {
+      this.selectVariant();
+    }
+    assert this.selected.constructed != null : "@AssumeAssertion(nullness): at most one variant"
+        + " will be selected and used, and as part of initialization, the object would be"
+        + " constructed";
     return selected.constructed;
   }
 
-  private static <T> Variant<T> getVariant(List<Variant<T>> variants) {
-    for (Variant<T> variant : variants) {
-      T got = variant.get();
-      if (got == null) {
-        continue;
-      }
-      return variant;
-    }
-    throw new IllegalArgumentException("Can't find any suitable variants");
-  }
-
+  /**
+   * Gets the name of the native used.
+   *
+   * @return the name of the native in use
+   */
   public String getLoadedVariant() {
+    if (selected == null) {
+      this.selectVariant();
+    }
     return selected.name;
   }
 
@@ -39,7 +60,7 @@ public final class NativeCodeLoader<T> implements Supplier<T> {
     private final Runnable setup;
     private final String name;
     private final Supplier<T> object;
-    private T constructed;
+    private @Nullable T constructed;
 
     Variant(BooleanSupplier possiblyAvailable, Runnable setup, String name, T object) {
       this(possiblyAvailable, setup, name, () -> object);
@@ -63,6 +84,9 @@ public final class NativeCodeLoader<T> implements Supplier<T> {
         try {
           setup.run();
           constructed = object.get();
+          if (constructed == null) {
+            throw new IllegalStateException("Unable to construct native object.");
+          }
           status = Status.SETUP;
         } catch (Exception e) {
           status = Status.SETUP_FAILURE;

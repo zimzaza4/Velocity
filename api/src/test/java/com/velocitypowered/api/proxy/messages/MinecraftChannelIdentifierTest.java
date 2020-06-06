@@ -19,6 +19,7 @@ class MinecraftChannelIdentifierTest {
   }
 
   @Test
+  @SuppressWarnings("nullness") // This intentionally tests unsound code
   void createDisallowsNull() {
     assertAll(
         () -> assertThrows(IllegalArgumentException.class, () -> create(null, "")),

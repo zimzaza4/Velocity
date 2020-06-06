@@ -19,15 +19,19 @@ import javax.lang.model.element.TypeElement;
 import javax.tools.Diagnostic;
 import javax.tools.FileObject;
 import javax.tools.StandardLocation;
+import org.checkerframework.checker.nullness.qual.EnsuresNonNull;
+import org.checkerframework.checker.nullness.qual.MonotonicNonNull;
+import org.checkerframework.checker.nullness.qual.RequiresNonNull;
 
 @SupportedAnnotationTypes({"com.velocitypowered.api.plugin.Plugin"})
 public class PluginAnnotationProcessor extends AbstractProcessor {
 
-  private ProcessingEnvironment environment;
-  private String pluginClassFound;
+  private @MonotonicNonNull ProcessingEnvironment environment;
+  private @MonotonicNonNull String pluginClassFound;
   private boolean warnedAboutMultiplePlugins;
 
   @Override
+  @EnsuresNonNull({ "environment" })
   public synchronized void init(ProcessingEnvironment processingEnv) {
     this.environment = processingEnv;
   }
@@ -40,6 +44,9 @@ public class PluginAnnotationProcessor extends AbstractProcessor {
   @Override
   public synchronized boolean process(Set<? extends TypeElement> annotations,
       RoundEnvironment roundEnv) {
+    assert this.environment != null
+        : "@AssumeAssertion(nullness): javac always calls the init() method before process()";
+
     if (roundEnv.processingOver()) {
       return false;
     }

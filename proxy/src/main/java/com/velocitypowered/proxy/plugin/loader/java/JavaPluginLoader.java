@@ -58,8 +58,13 @@ public class JavaPluginLoader implements PluginLoader {
     if (!(source instanceof JavaVelocityPluginDescriptionCandidate)) {
       throw new IllegalArgumentException("Description provided isn't of the Java plugin loader");
     }
+    Optional<Path> jar = source.getSource();
+    if (!jar.isPresent()) {
+      throw new IllegalArgumentException("Source is not present");
+    }
+
     PluginClassLoader loader = new PluginClassLoader(
-        new URL[]{source.getSource().get().toUri().toURL()}
+        new URL[]{jar.get().toUri().toURL()}
     );
     loader.addToClassloaders();
 

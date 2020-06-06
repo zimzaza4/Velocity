@@ -1,5 +1,7 @@
 package com.velocitypowered.api.proxy.messages;
 
+import static com.google.common.base.Preconditions.checkArgument;
+
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import java.util.Objects;
@@ -41,12 +43,15 @@ public final class MinecraftChannelIdentifier implements ChannelIdentifier {
    * @return a new channel identifier
    */
   public static MinecraftChannelIdentifier create(String namespace, String name) {
-    Preconditions.checkArgument(!Strings.isNullOrEmpty(namespace), "namespace is null or empty");
-    Preconditions.checkArgument(name != null, "namespace is null or empty");
-    Preconditions.checkArgument(VALID_IDENTIFIER_REGEX.matcher(namespace).matches(),
+    if (namespace == null || namespace.isEmpty()) {
+      throw new IllegalArgumentException("namespace is null or empty");
+    }
+    if (name == null) {
+      throw new IllegalArgumentException("name is null or empty");
+    }
+    checkArgument(VALID_IDENTIFIER_REGEX.matcher(namespace).matches(),
         "namespace is not valid");
-    Preconditions
-        .checkArgument(VALID_IDENTIFIER_REGEX.matcher(name).matches(), "name is not valid");
+    checkArgument(VALID_IDENTIFIER_REGEX.matcher(name).matches(), "name is not valid");
     return new MinecraftChannelIdentifier(namespace, name);
   }
 

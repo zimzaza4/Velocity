@@ -28,9 +28,9 @@ public final class PlayerModInfoEvent {
 
   @Override
   public String toString() {
-    return MoreObjects.toStringHelper(this)
-        .add("player", player)
-        .add("modInfo", modInfo)
-        .toString();
+    return "PlayerModInfoEvent{"
+        + "player=" + player
+        + ", modInfo=" + modInfo
+        + '}';
   }
 }

@@ -81,7 +81,7 @@ public final class ServerPing {
   }
 
   @Override
-  public boolean equals(Object o) {
+  public boolean equals(@Nullable Object o) {
     if (this == o) {
       return true;
     }
@@ -276,18 +276,18 @@ public final class ServerPing {
 
     @Override
     public String toString() {
-      return MoreObjects.toStringHelper(this)
-          .add("version", version)
-          .add("onlinePlayers", onlinePlayers)
-          .add("maximumPlayers", maximumPlayers)
-          .add("samplePlayers", samplePlayers)
-          .add("modType", modType)
-          .add("mods", mods)
-          .add("description", description)
-          .add("favicon", favicon)
-          .add("nullOutPlayers", nullOutPlayers)
-          .add("nullOutModinfo", nullOutModinfo)
-          .toString();
+      return "Builder{"
+          + "version=" + version
+          + ", onlinePlayers=" + onlinePlayers
+          + ", maximumPlayers=" + maximumPlayers
+          + ", samplePlayers=" + samplePlayers
+          + ", modType='" + modType + '\''
+          + ", mods=" + mods
+          + ", description=" + description
+          + ", favicon=" + favicon
+          + ", nullOutPlayers=" + nullOutPlayers
+          + ", nullOutModinfo=" + nullOutModinfo
+          + '}';
     }
   }
 
@@ -323,7 +323,7 @@ public final class ServerPing {
     }
 
     @Override
-    public boolean equals(Object o) {
+    public boolean equals(@Nullable Object o) {
       if (this == o) {
         return true;
       }
@@ -380,7 +380,7 @@ public final class ServerPing {
     }
 
     @Override
-    public boolean equals(Object o) {
+    public boolean equals(@Nullable Object o) {
       if (this == o) {
         return true;
       }
@@ -425,7 +425,7 @@ public final class ServerPing {
     }
 
     @Override
-    public boolean equals(Object o) {
+    public boolean equals(@Nullable Object o) {
       if (this == o) {
         return true;
       }

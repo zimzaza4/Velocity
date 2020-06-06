@@ -9,14 +9,31 @@ buildscript {
 
 plugins {
     id 'java'
+    id 'org.checkerframework' version '0.5.4' apply false
+    id 'checkstyle'
 }
 
 allprojects {
-    group 'com.velocitypowered'
-    version '1.1.0-SNAPSHOT'
+    repositories {
+        mavenLocal()
+        mavenCentral()
 
-    sourceCompatibility = 1.8
-    targetCompatibility = 1.8
+        // for kyoripowered dependencies
+        maven {
+            url 'https://oss.sonatype.org/content/groups/public/'
+        }
+
+        // Brigadier
+        maven {
+            url "https://libraries.minecraft.net"
+        }
+
+        // Configurate
+        maven {
+            name = 'sponge'
+            url = 'https://repo.spongepowered.org/maven'
+        }
+    }
 
     ext {
         // dependency versions
@@ -26,7 +43,7 @@ allprojects {
         log4jVersion = '2.11.2'
         nettyVersion = '4.1.50.Final'
         guavaVersion = '25.1-jre'
-        checkerFrameworkVersion = '2.7.0'
+        checkerFrameworkVersion = '3.4.1'
         configurateVersion = '3.6'
 
         getCurrentShortRevision = {
@@ -40,31 +57,40 @@ allprojects {
             }
         }
     }
+}
 
-    repositories {
-        mavenLocal()
-        mavenCentral()
-        
-        // for kyoripowered dependencies
-        maven {
-            url 'https://oss.sonatype.org/content/groups/public/'
-        }
-        
-        // Brigadier
-        maven {
-            url "https://libraries.minecraft.net"
+subprojects { subproject ->
+        group 'com.velocitypowered'
+        version '1.1.0-SNAPSHOT'
+
+        sourceCompatibility = 1.8
+        targetCompatibility = 1.8
+
+        apply plugin: 'java'
+        apply plugin: 'checkstyle'
+        apply plugin: 'org.checkerframework'
+
+        checkstyle {
+            toolVersion '8.14'
+            configFile new File(project.rootDir, ['config', 'checkstyle', 'checkstyle.xml'].join(File.separator))
+
+            // The build should immediately fail if we have errors.
+            maxErrors = 0
+            maxWarnings = 0
         }
 
-        // Configurate
-        maven {
-            name = 'sponge'
-            url = 'https://repo.spongepowered.org/maven'
-        }
-    }
+        apply plugin: 'org.checkerframework'
 
-    test {
-        reports {
-            junitXml.enabled = true
+        checkerFramework {
+            if (subproject.name == 'velocity-native') {
+                checkers = ['org.checkerframework.checker.nullness.NullnessChecker',
+                            'org.checkerframework.checker.optional.OptionalChecker']
+            } else {
+                checkers = ['org.checkerframework.checker.optional.OptionalChecker']
+            }
         }
-    }
+
+        dependencies {
+            checkerFramework 'org.checkerframework:checker:3.4.1'
+        }
 }

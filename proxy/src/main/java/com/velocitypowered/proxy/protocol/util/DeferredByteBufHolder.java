@@ -11,8 +11,7 @@ import org.checkerframework.checker.nullness.qual.MonotonicNonNull;
  */
 public class DeferredByteBufHolder implements ByteBufHolder {
 
-  @MonotonicNonNull
-  private ByteBuf backing;
+  private @MonotonicNonNull ByteBuf backing;
 
   public DeferredByteBufHolder(
       @MonotonicNonNull ByteBuf backing) {

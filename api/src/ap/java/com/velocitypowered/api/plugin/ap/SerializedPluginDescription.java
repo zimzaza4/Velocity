@@ -32,10 +32,10 @@ public final class SerializedPluginDescription {
     Preconditions.checkNotNull(id, "id");
     Preconditions.checkArgument(ID_PATTERN.matcher(id).matches(), "id is not valid");
     this.id = id;
-    this.name = Strings.emptyToNull(name);
-    this.version = Strings.emptyToNull(version);
-    this.description = Strings.emptyToNull(description);
-    this.url = Strings.emptyToNull(url);
+    this.name = name == null || name.isEmpty() ? null : name;
+    this.version = version == null || version.isEmpty() ? null : version;
+    this.description = description == null || description.isEmpty() ? null : description;
+    this.url = url == null || url.isEmpty() ? null : url;
     this.authors = authors == null || authors.isEmpty() ? ImmutableList.of() : authors;
     this.dependencies =
         dependencies == null || dependencies.isEmpty() ? ImmutableList.of() : dependencies;
@@ -86,7 +86,7 @@ public final class SerializedPluginDescription {
   }
 
   @Override
-  public boolean equals(Object o) {
+  public boolean equals(@Nullable Object o) {
     if (this == o) {
       return true;
     }
@@ -142,7 +142,7 @@ public final class SerializedPluginDescription {
     }
 
     @Override
-    public boolean equals(Object o) {
+    public boolean equals(@Nullable Object o) {
       if (this == o) {
         return true;
       }

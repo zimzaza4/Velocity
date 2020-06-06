@@ -12,8 +12,10 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import org.checkerframework.checker.nullness.qual.EnsuresNonNull;
 import org.checkerframework.checker.nullness.qual.MonotonicNonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
+import org.checkerframework.checker.nullness.qual.RequiresNonNull;
 
 /**
  * GS4 query response. This class is immutable.
@@ -140,7 +142,6 @@ public final class QueryResponse {
     return plugins;
   }
 
-
   /**
    * Creates a new {@link Builder} instance from data represented by this response, so that you
    * may create a new {@link QueryResponse} with new data. It is guaranteed that
@@ -150,17 +151,7 @@ public final class QueryResponse {
    * @return {@link QueryResponse} builder
    */
   public Builder toBuilder() {
-    return QueryResponse.builder()
-        .hostname(getHostname())
-        .gameVersion(getGameVersion())
-        .map(getMap())
-        .currentPlayers(getCurrentPlayers())
-        .maxPlayers(getMaxPlayers())
-        .proxyHost(getProxyHost())
-        .proxyPort(getProxyPort())
-        .players(getPlayers())
-        .proxyVersion(getProxyVersion())
-        .plugins(getPlugins());
+    return new QueryResponse.Builder(this);
   }
 
   /**
@@ -173,7 +164,7 @@ public final class QueryResponse {
   }
 
   @Override
-  public boolean equals(Object o) {
+  public boolean equals(@Nullable Object o) {
     if (this == o) {
       return true;
     }
@@ -230,10 +221,30 @@ public final class QueryResponse {
     private int maxPlayers;
     private int proxyPort;
 
-    private List<String> players = new ArrayList<>();
-    private List<PluginInformation> plugins = new ArrayList<>();
+    private final List<String> players = new ArrayList<>();
+    private final List<PluginInformation> plugins = new ArrayList<>();
 
     private Builder() {
+    }
+
+    /**
+     * Creates a new QueryResponse builder from an existing response.
+     * @param response the response to clone
+     */
+    @EnsuresNonNull({ "hostname", "gameVersion", "map", "proxyHost", "proxyVersion" })
+    private Builder(QueryResponse response) {
+      this.hostname = response.hostname;
+      this.gameVersion = response.gameVersion;
+      this.map = response.map;
+      this.proxyHost = response.proxyHost;
+      this.proxyVersion = response.proxyVersion;
+
+      this.currentPlayers = response.currentPlayers;
+      this.maxPlayers = response.maxPlayers;
+      this.proxyPort = response.proxyPort;
+
+      this.players.addAll(response.players);
+      this.plugins.addAll(response.plugins);
     }
 
     /**
@@ -241,6 +252,7 @@ public final class QueryResponse {
      * @param hostname the hostname to set
      * @return this builder, for chaining
      */
+    @EnsuresNonNull("this.hostname")
     public Builder hostname(String hostname) {
       this.hostname = Preconditions.checkNotNull(hostname, "hostname");
       return this;
@@ -251,6 +263,7 @@ public final class QueryResponse {
      * @param gameVersion the game version to set
      * @return this builder, for chaining
      */
+    @EnsuresNonNull("this.gameVersion")
     public Builder gameVersion(String gameVersion) {
       this.gameVersion = Preconditions.checkNotNull(gameVersion, "gameVersion");
       return this;
@@ -261,6 +274,7 @@ public final class QueryResponse {
      * @param map the map to set
      * @return this builder, for chaining
      */
+    @EnsuresNonNull("this.map")
     public Builder map(String map) {
       this.map = Preconditions.checkNotNull(map, "map");
       return this;
@@ -293,6 +307,7 @@ public final class QueryResponse {
      * @param proxyHost the host where the proxy is running
      * @return this instance, for chaining
      */
+    @EnsuresNonNull("this.proxyHost")
     public Builder proxyHost(String proxyHost) {
       this.proxyHost = Preconditions.checkNotNull(proxyHost, "proxyHost");
       return this;
@@ -344,6 +359,7 @@ public final class QueryResponse {
      * @param proxyVersion the proxy version to set
      * @return this builder, for chaining
      */
+    @EnsuresNonNull("this.proxyVersion")
     public Builder proxyVersion(String proxyVersion) {
       this.proxyVersion = Preconditions.checkNotNull(proxyVersion, "proxyVersion");
       return this;
@@ -385,6 +401,7 @@ public final class QueryResponse {
      *
      * @return response
      */
+    @RequiresNonNull({ "hostname", "gameVersion", "map", "proxyHost", "proxyVersion" })
     public QueryResponse build() {
       return new QueryResponse(
           Preconditions.checkNotNull(hostname, "hostname"),
@@ -428,14 +445,14 @@ public final class QueryResponse {
 
     @Override
     public String toString() {
-      return MoreObjects.toStringHelper(this)
-          .add("name", name)
-          .add("version", version)
-          .toString();
+      return "PluginInformation{"
+          + "name='" + name + '\''
+          + ", version='" + version + '\''
+          + '}';
     }
 
     @Override
-    public boolean equals(Object o) {
+    public boolean equals(@Nullable Object o) {
       if (this == o) {
         return true;
       }

@@ -147,7 +147,7 @@ public final class KickedFromServerEvent implements
    */
   public static final class RedirectPlayer implements ServerKickResult {
 
-    private final Component message;
+    private final @Nullable Component message;
     private final RegisteredServer server;
 
     private RedirectPlayer(RegisteredServer server, @Nullable Component message) {
@@ -164,8 +164,7 @@ public final class KickedFromServerEvent implements
       return server;
     }
 
-    @Nullable
-    public Component getMessage() {
+    public @Nullable Component getMessage() {
       return message;
     }
 

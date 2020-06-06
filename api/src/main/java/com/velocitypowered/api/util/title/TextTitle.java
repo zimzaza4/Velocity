@@ -121,14 +121,14 @@ public final class TextTitle implements Title {
 
   @Override
   public String toString() {
-    return MoreObjects.toStringHelper(this)
-        .add("title", title)
-        .add("subtitle", subtitle)
-        .add("stay", stay)
-        .add("fadeIn", fadeIn)
-        .add("fadeOut", fadeOut)
-        .add("resetBeforeSend", resetBeforeSend)
-        .toString();
+    return "TextTitle{"
+        + "title=" + title
+        + ", subtitle=" + subtitle
+        + ", stay=" + stay
+        + ", fadeIn=" + fadeIn
+        + ", fadeOut=" + fadeOut
+        + ", resetBeforeSend=" + resetBeforeSend
+        + '}';
   }
 
   @Override
@@ -241,14 +241,14 @@ public final class TextTitle implements Title {
 
     @Override
     public String toString() {
-      return MoreObjects.toStringHelper(this)
-          .add("title", title)
-          .add("subtitle", subtitle)
-          .add("stay", stay)
-          .add("fadeIn", fadeIn)
-          .add("fadeOut", fadeOut)
-          .add("resetBeforeSend", resetBeforeSend)
-          .toString();
+      return "TextTitle.Builder{"
+          + "title=" + title
+          + ", subtitle=" + subtitle
+          + ", stay=" + stay
+          + ", fadeIn=" + fadeIn
+          + ", fadeOut=" + fadeOut
+          + ", resetBeforeSend=" + resetBeforeSend
+          + '}';
     }
   }
 }
