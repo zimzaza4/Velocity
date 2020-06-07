@@ -24,7 +24,7 @@ public final class NativeCodeLoader<T extends @NonNull Object> implements Suppli
         @Nullable T got = variant.get();
         if (got != null) {
           this.selected = variant;
-          break;
+          return;
         }
       }
       throw new IllegalArgumentException("Can't find any suitable variants");
