@@ -18,3 +18,8 @@ jobs:
       run: chmod +x gradlew
     - name: Build with Gradle
       run: ./gradlew build
+    - name: Upload Velocuty
+      uses: actions/upload-artifact@v3
+      with:
+        name: Velocuty
+        path: proxy/build/libs
